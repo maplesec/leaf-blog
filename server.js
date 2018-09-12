@@ -3,6 +3,8 @@ import session from 'express-session';
 import db from './mongodb/db.js';
 import router from './routes/index';
 
+var qr = require('qr-image');
+
 const { createBundleRenderer } = require('vue-server-renderer')
 const cookieParser = require('cookie-parser')
 const app = express();
@@ -35,6 +37,12 @@ const renderer = createBundleRenderer(bundle, {
 })
 
 router(app);
+
+app.get('/qr', function(req, res){
+    var code = qr.image('I am maplesec and I love js', { type: 'png' });
+    res.setHeader('Content-type', 'image/png');  //sent qr image to client side
+    code.pipe(res);
+})
 
 app.get('*', function(req, res){
     // const renderer = serverRender.createRenderer({
