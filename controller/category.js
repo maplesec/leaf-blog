@@ -103,7 +103,8 @@ class Category extends BaseComponent{
             const id = await this.getId(model + '_id');
             const newItem = {
                 id,
-                name
+                name,
+                style
             }
             await BaseModel.create(newItem);
             return({
@@ -136,7 +137,7 @@ class Category extends BaseComponent{
             }) 
         }
         try{
-            await RoleModel.findOneAndRemove({id});
+            await BaseModel.findOneAndRemove({id});
             return({
                 status: 1,
                 success: 'SUCCESS'

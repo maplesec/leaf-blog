@@ -15,8 +15,8 @@ async function list(req, res){
 async function create(req, res){
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
-        const {id, name, style} = fields;
-        res.send(await controller.create(id, name, style))
+        const {name, style} = fields;
+        res.send(await controller.create(name, style))
     })
 }
 
@@ -35,7 +35,7 @@ async function update(req, res){
     const form = new formidable.IncomingForm();
     form.parse(req, async(err, fields, files) => {
         const {name, style} = fields;
-        res.send(await Resource.updateResource(id, name, style));
+        res.send(await controller.update(id, name, style));
     })
 }
 
