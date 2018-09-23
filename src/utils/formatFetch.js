@@ -36,7 +36,7 @@ const $doRequest = (promise, onSuccess = ()=>{}) => {
         onSuccess(e.data.response);
         return Promise.resolve({ status, result: e.data.response})
       } else {
-        return Promise.reject({ status, message: i18n.t('http.' + e.data.type)})
+        return Promise.reject({ status, message: i18n.t('http.' + e.data.type) + ': ' + e.data.message})
       }
     },
     (e) => {

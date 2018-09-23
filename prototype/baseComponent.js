@@ -8,7 +8,6 @@ export default class BaseComponent{
         if(!this.idList.includes(type)){
             console.log('id类型错误');
             throw new Error('id类型错误');
-            return
         }
         try{
             const idData = await Ids.findOne();
@@ -23,4 +22,218 @@ export default class BaseComponent{
             throw new Error(err);
         }
     }
+
+    /**
+     * 分页获取
+     * @param {*} page 
+     * @param {*} pageSize 
+     * @param {*} filter 
+     * @param {*} sort 
+     * @param {*} sortBy 
+     */
+    async list(page, pageSize, filter, sort, sortBy) {
+        let sortObj = {'id': -1}
+        try {
+            if (page && pageSize) {
+                if (typeof(Number(page)) !== 'number' || !(/^[1-9]\d*$/.test(page))) {
+                    throw new Error('page must be number')
+                } else if (!Number(pageSize)) {
+                    throw new Error('pageSize must be number')
+                }
+            }
+            if (sortBy) {
+                sortObj = {};
+                sortObj[sortBy] = sort === 'asc' ? 1 : -1;
+            }
+        } catch (err) {
+            return({
+                status: 0,
+                type: 'ERROR_PARAMS',
+                message: err.message
+            })
+        }
+        try {
+            const offset = (page - 1) * pageSize;
+            let action;
+            let actionCount;
+            if (filter) {
+                // 多字段模糊查询
+                action = this.basemodel.find({$or: [{name: eval('/' + filter + '/gi')}]}, this.cols);
+                actionCount = this.basemodel.find({$or: [{name: eval('/' + filter + '/gi')}]}, this.cols).count();
+            } else {
+                action = this.basemodel.find({}, this.cols);
+                actionCount = this.basemodel.find({}, this.cols).count();
+            }
+            if (page && pageSize){
+                // 分页与排序
+                action = action.limit(Number(pageSize)).skip(Number(offset)).sort(sortObj);
+            } else {
+                action = action.sort(sortObj);
+            }
+            const totalCount = await actionCount;
+            const result = await action;
+            return({
+                status: 1,
+                type: 'SUCCESS',
+                response: {
+                    totalCount,
+                    result
+                }
+            })
+        } catch (err) {
+            console.log(this.model + ' get', err.message)
+            return({
+                status: 0,
+                type: 'ERROR_DB',
+                message: err.message
+            })
+        }
+    }
+
+    /**
+     * 增加
+     * @param {*} args 
+     */
+    async create(...args){
+        let params = {};
+        try{
+            this.cols_config.forEach((item) => {
+                if(item.required && !args[item.index]){
+                    throw new Error(item.key + ' is required')
+                }
+                params[item.key] = args[item.index];
+            })
+            console.log("params:", params)
+        }
+        catch(err){
+            return({
+                status: 0,
+                type: 'ERROR_PARAMS',
+                message: err.message
+            })
+        }
+        try{
+            const id = await this.getId(this.model + '_id');
+            const newItem = {
+                id,
+                ...params
+            }
+            await this.basemodel.create(newItem);
+            return({
+                status: 1,
+                success: 'SUCCESS',
+                response: {
+                    id: id
+                }
+            })
+        }catch(err){
+            console.log('add', err.message);
+            return({
+                status: 0,
+                type: 'ERROR_DB',
+                message: err.message
+            })
+        }
+    }
+
+    /**
+     * 删除
+     * @param {*} id 
+     */
+    async remove(id){
+        if(!id || !Number(id)){
+            return({
+                status: 0,
+                type: 'ERROR_PARAMS',
+                message: 'invalid id',
+            }) 
+        }
+        try{
+            await this.basemodel.findOneAndRemove({id});
+            return({
+                status: 1,
+                success: 'SUCCESS'
+            })
+        }
+        catch (err){
+            console.log(this.model + ' delete', err.message);
+            return({
+                type: 'ERROR_DB',
+                message: err.message
+            })
+        }
+    }
+
+    /**
+     * 获取单个
+     * @param {*} id 
+     */
+    async get(id){
+        if(!id || !Number(id)){
+            return({
+                status: 0,
+                type: 'ERROR_PARAMS',
+                message: 'invalid id'
+            })
+        }
+        try{
+            const item = await this.basemodel.findOne({id: id}, this.cols);
+            return({
+                status: 1,
+                type: 'SUCCESS',
+                response: item
+            });
+        }catch(err){
+            console.log(this.model + ' get', err.message);
+            return({
+                status: 0,
+                type: 'ERROR_DB',
+                message: err.message
+            })
+        }
+    }
+
+    /**
+     * 更新
+     * @param {*} id 
+     * @param {*} args 
+     */
+    async update(id, ...args){
+        let params = {};
+        try{
+            if(!id){
+                throw new Error('invalid id')
+            }
+            this.cols_config.map((item) => {
+                if(item.required && !args[item.index]){
+                    throw new Error(item.key + ' is required')
+                }
+                params[item.key] = args[item.index];
+            })
+        }catch(err){
+            return({
+                status: 0,
+                type: 'ERROR_PARAMS',
+                message: err.message
+            })
+        }
+        try{
+            const item = {
+                ...params
+            }
+            await this.basemodel.update({id}, item);
+            return({
+                status: 1,
+                success: 'SUCCESS'
+            })
+        }catch(err){
+            console.log(this.model + ' update', err.message);
+            return({
+                status: 0,
+                type: 'ERROR_DB',
+                message: err.message
+            })
+        }
+    }
+    
 }
