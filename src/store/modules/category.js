@@ -2,10 +2,11 @@ import * as api from '@/services/category'
 import $doRequest from '@/utils/formatFetch'
 import template from '../template'
 
+const state = JSON.parse(JSON.stringify(template.state))
 const category = {
     namespaced: true,
     state: {
-        ...template.state,
+        ...state,
         module: 'category',
     },
     getters: {},
