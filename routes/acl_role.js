@@ -7,42 +7,42 @@ import formidable from 'formidable'
 
 const router = express.Router();
 
-async function addRole(req, res, next){
+async function create(req, res, next){
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
         const {name, allows} = fields;
-        res.send(await Role.addRole(name, allows));
+        res.send(await Role.create(name, allows));
     });
 }
 
-async function getRole(req,res,next){
+async function list(req,res,next){
     const {page, pageSize, filter = '', sort = 'desc', sortBy = ''} = req.query;
-    res.send(await Role.getRole(page, pageSize, filter, sort, sortBy));
+    res.send(await Role.list(page, pageSize, filter, sort, sortBy));
 }
 
-async function deleteRole(req, res, next){
+async function remove(req, res, next){
     const {role_id} = req.params;
-    res.send(await Role.deleteRole(role_id));
+    res.send(await Role.remove(role_id));
 }
 
-async function getRoleById(req, res, next){
+async function get(req, res, next){
     const role_id = req.params.role_id;
-    res.send(await Role.getRoleById(role_id));
+    res.send(await Role.get(role_id));
 }
 
-async function updateRole(req, res, next){
+async function update(req, res, next){
     const role_id = req.params.role_id;
     const form = new formidable.IncomingForm();
     form.parse(req, async(err, fields, files) => {
         const {name, allows} = fields;
-        res.send(await Role.updateRole(role_id, name, allows))
+        res.send(await Role.update(role_id, name, allows))
     })
 }
 
-router.get('/', [authorize('role', 'show')], getRole);
-router.post('/', [authorize('role', 'operate')], addRole);
-router.get('/:role_id', [authorize('role', 'show')], getRoleById);
-router.delete('/:role_id', [authorize('role', 'operate')], deleteRole);
-router.put('/:role_id', [authorize('role', 'show')], updateRole);
+router.get('/', [authorize('role', 'show')], list);
+router.post('/', [authorize('role', 'operate')], create);
+router.get('/:role_id', [authorize('role', 'show')], get);
+router.delete('/:role_id', [authorize('role', 'operate')], remove);
+router.put('/:role_id', [authorize('role', 'show')], update);
 
 export default router

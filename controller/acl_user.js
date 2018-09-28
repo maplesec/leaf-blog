@@ -1,9 +1,10 @@
 'use strict';
 
 import BaseComponent from '../prototype/baseComponent'
-import UserModel from '../models/acl_user'
+import UserOptions from '../models/acl_user'
 import ResourceModel from '../models/acl_resource'
 import formidable from 'formidable'
+import ResourceController from './acl_resource'
 
 const cols = 'id name account'
 
@@ -67,9 +68,8 @@ function removeUserRoles (user_id, roles) {
 }
 
 class User extends BaseComponent{
-    constructor(){
-        super()
-        this.addUser = this.addUser.bind(this);
+    constructor(options){
+        super(options)
     }
 
     /**
@@ -92,12 +92,13 @@ class User extends BaseComponent{
             })
         }
         try {
-            const user_obj = await UserModel.findOne({account, password});
+            const user_obj = await this.basemodel.findOne({account, password});
             if (user_obj) {
                 // 登陆成功
                 const {name, account} = user_obj;
                 const id = user_obj.id.toString();
-                const resourceList = await ResourceModel.find();
+                const ResourceResponse = await ResourceController.list();
+                const resourceList = ResourceResponse.response.result;
                 let resources = [];
                 resourceList.forEach(function(item){
                     resources.push(item.id);
@@ -111,7 +112,7 @@ class User extends BaseComponent{
                     response: mix
                 });
             }else{
-                const hasAccount = await UserModel.findOne({account});
+                const hasAccount = await this.basemodel.findOne({account});
                 if (hasAccount) {
                     return({
                         status: 0,
@@ -149,14 +150,15 @@ class User extends BaseComponent{
             })
         }
         try{
-            const resourceList = await ResourceModel.find();
+            const ResourceResponse = await ResourceController.list();
+            const resourceList = ResourceResponse.response.result;
             let resources = [];
             resourceList.forEach(function(item){
                 resources.push(item.id);
             });
             const permissions = await allowedPermissions(user_id, resources);
             const roles = await userRoles(user_id);
-            const user_obj = await UserModel.findOne({id: user_id}, cols);
+            const user_obj = await this.basemodel.findOne({id: user_id}, cols);
             const {id, name, account} = user_obj;
             const mix = { id, name, account, permissions, roles };
             return({
@@ -175,81 +177,13 @@ class User extends BaseComponent{
     }
 
     /**
-     * 分页获取用户列表
-     * 如果page和pageSize信息不全,默认返回所有
-     * @param {*} page 
-     * @param {*} pageSize 
-     * @param {*} filter 
-     * @param {*} sort 
-     * @param {*} sortBy 
-     */
-    async getUsers(page, pageSize, filter = '', sort = 'desc', sortBy = '') {
-        let sortObj = {'id': -1}
-        try {
-            if (page && pageSize) {
-                if (typeof(Number(page)) !== 'number' || !(/^[1-9]\d*$/.test(page))) {
-                    throw new Error('page must be number')
-                } else if (!Number(pageSize)) {
-                    throw new Error('pageSize must be number')
-                }
-            }
-            if (sortBy) {
-                sortObj = {};
-                sortObj[sortBy] = sort === 'asc' ? 1 : -1;
-            }
-        } catch (err) {
-            return({
-                status: 0,
-                type: 'ERROR_PARAMS',
-                message: err.message
-            })
-        }
-        try {
-            const offset = (page - 1) * pageSize;
-            let action;
-            let actionCount;
-            if (filter) {
-                // 多字段模糊查询
-                action = UserModel.find({$or: [{name: eval('/' + filter + '/gi')}, {account: eval('/' + filter + '/gi')}]}, cols);
-                actionCount = UserModel.find({$or: [{name: eval('/' + filter + '/gi')}, {account: eval('/' + filter + '/gi')}]}, cols).count();
-            } else {
-                action = UserModel.find({}, cols);
-                actionCount = UserModel.find({}, cols).count();
-            }
-            if (page && pageSize){
-                // 分页与排序
-                action = action.limit(Number(pageSize)).skip(Number(offset)).sort(sortObj);
-            } else {
-                action = action.sort(sortObj);
-            }
-            const totalCount = await actionCount;
-            const result = await action;
-            return({
-                status: 1,
-                type: 'SUCCESS',
-                response: {
-                    totalCount,
-                    result
-                }
-            })
-        } catch (err) {
-            console.log('getUsers', err.message)
-            return({
-                status: 0,
-                type: 'ERROR_DB',
-                message: err.message
-            })
-        }
-    }
-
-    /**
      * 增加用户, 并指定角色
      * @param {*} account 
      * @param {*} name 
      * @param {*} password 
      * @param {*} roles 
      */
-    async addUser(account, name, password, roles){
+    async create(account, name, password, roles){
         try {
             if (!account) {
                 throw new Error('account is required');
@@ -266,27 +200,27 @@ class User extends BaseComponent{
             })
         }
         try {
-            const user_id = await this.getId('user_id');
-            const newUser = {
-                id: user_id,
+            const id = await this.getId(this.model + '_id');
+            const newItem = {
+                id: id,
                 account,
                 name,
                 password
             }
-            const user = await UserModel.create(newUser);
+            await this.basemodel.create(newItem);
             if (roles) {
                 // 指定用户角色
-                await addUserRoles(user_id, roles);
+                await addUserRoles(id, roles);
             }
             return({
                 status: 1,
                 type: 'SUCCESS',
                 response: {
-                    id: user_id
+                    id
                 }
             })
         }catch (err) {
-            console.log('addUser', err.message);
+            console.log('add', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -297,28 +231,27 @@ class User extends BaseComponent{
 
     /**
      * 删除用户,并移除角色对应关系
-     * @param {*} user_id 
+     * @param {*} id 
      */
-    async deleteUser (user_id) {
-        if (!user_id || !Number(user_id)) {
+    async remove (id) {
+        if(!id || !Number(id)){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
-                message: 'invalid user_id',
-            })
+                message: 'invalid id',
+            }) 
         }
         try{
-            await UserModel.findOneAndRemove({id: user_id});
-            const roles = await userRoles(user_id);
-            await removeUserRoles(user_id, roles);
+            await this.basemodel.findOneAndRemove({id});
+            const roles = await userRoles(id);
+            await removeUserRoles(id, roles);
             return({
                 status: 1,
                 type: 'SUCCESS'
             })
         }catch (err) {
-            console.log('deleteUser', err.message);
+            console.log(this.model + ' delete', err.message);
             return({
-                status: 0,
                 type: 'ERROR_DB',
                 message: err.message
             })
@@ -327,25 +260,26 @@ class User extends BaseComponent{
 
     /**
      * 获取单个用户, 及对应角色和资源的权限
-     * @param {*} user_id 
+     * @param {*} id 
      */
-    async getUserById(user_id) {
-        if(!user_id || !Number(user_id)){
+    async get(id) {
+        if(!id || !Number(id)){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
-                message: 'invalid user_id'
+                message: 'invalid id'
             })
         }
         try{
-            const resourceList = await ResourceModel.find();
+            const ResourceResponse = await ResourceController.list();
+            const resourceList = ResourceResponse.response.result;
             let resources = [];
             resourceList.forEach(function(item){
                 resources.push(item.id);
             });
-            const permissions = await allowedPermissions(user_id, resources);
-            const roles = await userRoles(user_id);
-            const user_obj = await UserModel.findOne({id: user_id}, cols);
+            const permissions = await allowedPermissions(id, resources);
+            const roles = await userRoles(id);
+            const user_obj = await this.basemodel.findOne({id: id}, cols);
             const {id, name, account} = user_obj;
             const mix = { id, name, account, permissions, roles };
             return({
@@ -354,7 +288,7 @@ class User extends BaseComponent{
                 response: mix
             });
         }catch(err){
-            console.log('getUserById', err.message);
+            console.log(this.model + ' get', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -365,14 +299,14 @@ class User extends BaseComponent{
 
     /**
      * 更新用户
-     * @param {*} user_id 
+     * @param {*} id 
      * @param {*} name 
      * @param {*} password 
      * @param {*} roles 
      */
-    async updateUser(user_id, name, password, roles){
+    async update(id, name, password, roles){
         try{
-            if(!user_id || !Number(user_id)){
+            if(!id || !Number(id)){
                 throw new Error('invalid user_id')
             }
         }catch(err){
@@ -383,25 +317,25 @@ class User extends BaseComponent{
             })
         }
         try{
-            let newUser = {};
+            let item = {};
             if (name) {
-                newUser['name'] = name;
+                item['name'] = name;
             }
             if (password) {
-                newUser['password'] = password;
+                item['password'] = password;
             }
-            await UserModel.update({id: user_id}, newUser)
+            await this.basemodel.update({id}, item)
             if (roles) {
-                const _now = await userRoles(user_id);
-                await removeUserRoles(user_id, _now);
-                await addUserRoles(user_id, roles);
+                const _now = await userRoles(id);
+                await removeUserRoles(id, _now);
+                await addUserRoles(id, roles);
             }
             return({
                 status: 1,
                 type: 'SUCCESS'
             })
         }catch(err){
-            console.log('updateUser', err.message);
+            console.log(this.model + ' update', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -416,7 +350,7 @@ class User extends BaseComponent{
      */
     async isUserNameAvailable (name) {
         try {
-            const user = await UserModel.find({name: name});
+            const user = await this.basemodel.find({name: name});
             return({
                 status: 1,
                 type: 'SUCCESS',
@@ -461,12 +395,12 @@ class User extends BaseComponent{
                 return
             }
             try {
-                const user = await UserModel.find({id: user_id, password: oldPassword})
+                const user = await this.basemodel.find({id: user_id, password: oldPassword})
                 if (user.length > 0){
                     const newUser = {
                         password: newPassword
                     }
-                    await UserModel.update({id: user_id}, newUser)
+                    await this.basemodel.update({id: user_id}, newUser)
                     res.send({
                         status: 1,
                         type: 'SUCCESS',
@@ -489,4 +423,4 @@ class User extends BaseComponent{
         })
     }
 }
-export default new User()
+export default new User(UserOptions)

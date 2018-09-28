@@ -7,42 +7,42 @@ import formidable from 'formidable'
 
 const router = express.Router();
 
-async function getResource(req, res, next){
+async function list(req, res, next){
     const {page, pageSize, filter = '', sort = 'desc', sortBy = ''} = req.query;
-    res.send(await Resource.getResource(page, pageSize, filter, sort, sortBy));
+    res.send(await Resource.list(page, pageSize, filter, sort, sortBy));
 }
 
-async function addResource(req, res, next){
+async function create(req, res, next){
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
         const {id, name} = fields;
-        res.send(await Resource.addResource(id, name));
+        res.send(await Resource.create(id, name));
     });
 }
 
-async function deleteResource(req, res, next){
+async function remove(req, res, next){
     const {id} = req.params;
-    res.send(await Resource.deleteResource(id));
+    res.send(await Resource.remove(id));
 }
 
-async function getResourceById(req, res, next){
+async function get(req, res, next){
     const {id} = req.params;
-    res.send(await Resource.getResourceById(id));
+    res.send(await Resource.get(id));
 }
 
-async function updateResource(req, res, next){
+async function update(req, res, next){
     const {id} = req.params;
     const form = new formidable.IncomingForm();
     form.parse(req, async(err, fields, files) => {
         const {name} = fields;
-        res.send(await Resource.updateResource(id, name));
+        res.send(await Resource.update(id, name));
     })
 }
 
-router.get('/', [authorize('resource', 'show')], getResource);
-router.post('/', [authorize('resource', 'operate')], addResource);
-router.get('/:id', [authorize('resource', 'show')], getResourceById);
-router.delete('/:id', [authorize('resource', 'operate')], deleteResource);
-router.put('/:id', [authorize('resource', 'operate')], updateResource);
+router.get('/', [authorize('resource', 'show')], list);
+router.post('/', [authorize('resource', 'operate')], create);
+router.get('/:id', [authorize('resource', 'show')], get);
+router.delete('/:id', [authorize('resource', 'operate')], remove);
+router.put('/:id', [authorize('resource', 'operate')], update);
 
 export default router

@@ -13,4 +13,13 @@ roleSchema.index({id: 1});
 
 const Role = mongoose.model('Role', roleSchema);
 
-export default Role
+const Options = {
+    cols_config: [
+        {key: 'name', index: 1, required: true}
+    ],
+    cols: 'id name',
+    model: 'role',
+    basemodel: Role,
+}
+
+export default Options

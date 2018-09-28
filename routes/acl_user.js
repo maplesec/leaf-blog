@@ -7,22 +7,22 @@ import formidable from 'formidable'
 
 const router = express.Router();
 
-async function getUsers(req, res, next) {
+async function list(req, res, next) {
     const {page, pageSize, filter, sort, sortBy} = req.query;
-    res.send(await User.getUsers(page, pageSize, filter, sort,sortBy));
+    res.send(await User.list(page, pageSize, filter, sort,sortBy));
 }
 
-async function addUser(req, res, next){
+async function create(req, res, next){
     const form = new formidable.IncomingForm();
         form.parse(req, async (err, fields, files) => {
             const {account, name, password, roles} = fields;
-            res.send(await User.addUser(account, name, password, roles));
+            res.send(await User.create(account, name, password, roles));
         })
 }
 
-async function deleteUser(req, res, next) {
+async function remove(req, res, next) {
     const {user_id} = req.params;
-    res.send(await User.deleteUser(user_id));
+    res.send(await User.remove(user_id));
 }
 
 async function login(req, res, next) {
@@ -48,17 +48,17 @@ async function getProfile(req, res, next) {
     res.send(await User.getProfile(user_id));
 }
 
-async function getUserById(req, res, next){
+async function get(req, res, next){
     const user_id = req.params.user_id;
-    res.send(await User.getUserById(user_id));
+    res.send(await User.get(user_id));
 }
 
-async function updateUser(req, res, next){
+async function update(req, res, next){
     const user_id = req.params.user_id;
     const form = new formidable.IncomingForm();
     form.parse(req, async(err, fields, files) => {
         const {name, password, roles} = fields;
-        res.send(await User.updateUser(user_id, name, password, roles));
+        res.send(await User.update(user_id, name, password, roles));
     })
 }
 
@@ -68,14 +68,14 @@ async function isUserNameAvailable (req, res, next) {
 }
 
 
-router.get('/', [authorize('user', 'show')], getUsers);
-router.post('/', [authorize('user', 'operate')], addUser);
+router.get('/', [authorize('user', 'show')], list);
+router.post('/', [authorize('user', 'operate')], create);
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/profile', getProfile);
-router.get('/:user_id', [authorize('user', 'show')], getUserById);
-router.delete('/:user_id', [authorize('user', 'operate')], deleteUser);
-router.put('/:user_id', [authorize('user', 'operate')], updateUser);
+router.get('/:user_id', [authorize('user', 'show')], get);
+router.delete('/:user_id', [authorize('user', 'operate')], remove);
+router.put('/:user_id', [authorize('user', 'operate')], update);
 router.search('/:name', isUserNameAvailable);
 
 export default router

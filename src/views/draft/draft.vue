@@ -8,7 +8,19 @@
 
     <el-dialog :title="$t('common.add') + $t('common.space') + $t('resource.resource')" :visible.sync="dialog.dialogVisible" @open="dialog.contentVisible = true" @closed="dialog.contentVisible = false">
       <!--<create-resource v-if="dialog.contentVisible" :status="dialog.status" :id="dialog.id" @close="handleClose"></create-resource>-->
-      <modal-custom v-if="dialog.contentVisible" :status="dialog.status" :id="dialog.id" :options="dialog.options" @close="handleClose"></modal-custom>
+      <modal-custom v-if="dialog.contentVisible" :status="dialog.status" :id="dialog.id" :options="dialog.options" @close="handleClose">
+          <template slot-scope="slotProps" slot="selectCategory">
+              <!-- <el-select v-model="slotProps.form.category" placeholder="请选择分类">
+                  <el-option
+                    v-for="item in categoryList"
+                    :label="item.name"
+                    :value="item.id"
+                    :key="item.id">
+                </el-option>
+              </el-select> -->
+              <category-select v-model="slotProps.form.category"></category-select>
+          </template>
+      </modal-custom>
     </el-dialog>
 
     <table-custom :module="table.module" :cols="table.cols" :btns="table.btns" @operation="handleOperation"></table-custom>
@@ -20,11 +32,13 @@
 
     import tableCustom from '../../components/table/table.vue'
     import modalCustom from '../../components/modal/modal.vue'
+    import categorySelect from './categoryList.vue'
     const module = 'draft'
     export default {
         components: {
             tableCustom,
-            modalCustom
+            modalCustom,
+            categorySelect
         },
         data () {
             return {
@@ -53,6 +67,13 @@
                                 type: 'textarea',
                                 label: this.$t('draft.content'),
                                 initValue: ''
+                            },
+                            {
+                                key: 'category',
+                                type: 'slotoc',
+                                label: this.$t('draft.category'),
+                                initValue: '',
+                                slot: 'selectCategory'
                             }
                         ],
                         module: module
@@ -96,7 +117,7 @@
             }
         },
         created () {
-            this.initTable()
+            this.initTable();
         },
         asyncData({store}){
             return store.dispatch(`${module}/getList`)

@@ -14,6 +14,10 @@
                 <template v-if="ele.type==='slot'">
                     <slot :name="ele.slot" v-bind:form="form"></slot>
                 </template>
+                <!-- 仅插槽内容 -->
+                <el-form-item v-if="ele.type==='slotoc'" :key="ele.key" :label="ele.label" :label-width="formLabelWidth" :prop="ele.key">
+                    <slot :name="ele.slot" v-bind:form="form"></slot>
+                </el-form-item>
                 <!-- 密码定义类型 -->
                 <template v-if="ele.type==='pswdDefine'">
                     <el-form-item :key="ele.key + '0'" :label="ele.label" :label-width="formLabelWidth" :prop="ele.key">

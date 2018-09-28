@@ -1,11 +1,8 @@
 'use strict';
 
 import BaseComponent from '../prototype/baseComponent'
-import RoleModel from '../models/acl_role'
-import ResourceModel from '../models/acl_resource'
-import formidable from 'formidable'
-
-const cols = 'id name'
+import RoleOptions from '../models/category'
+import ResourceController from './acl_resource'
 
 const allow = function(roleObjs){
     return new Promise(function(resolve, reject){
@@ -61,86 +58,15 @@ function whatResources(role_id){
 
 
 class Role extends BaseComponent{
-    constructor(){
-        super()
-        this.addRole = this.addRole.bind(this);
+    constructor(options){
+        super(options)
     }
 
     /**
-     * 分页获取角色
-     * @param {*} page 
-     * @param {*} pageSize 
-     * @param {*} filter 
-     * @param {*} sort 
-     * @param {*} sortBy 
+     * 增加
+     * @param {*} args 
      */
-    async getRole(page, pageSize, filter, sort, sortBy) {
-        let sortObj = {'id': -1}
-        try {
-            if (page && pageSize) {
-                if (typeof(Number(page)) !== 'number' || !(/^[1-9]\d*$/.test(page))) {
-                    throw new Error('page must be number')
-                } else if (!Number(pageSize)) {
-                    throw new Error('pageSize must be number')
-                }
-            }
-            if (sortBy) {
-                sortObj = {};
-                sortObj[sortBy] = sort === 'asc' ? 1 : -1;
-            }
-        } catch (err) {
-            return({
-                status: 0,
-                type: 'ERROR_PARAMS',
-                message: err.message
-            })
-        }
-        try {
-            const offset = (page - 1) * pageSize;
-            let action;
-            let actionCount;
-            if (filter) {
-                // 多字段模糊查询
-                action = RoleModel.find({$or: [{name: eval('/' + filter + '/gi')}]}, cols);
-                actionCount = RoleModel.find({$or: [{name: eval('/' + filter + '/gi')}]}, cols).count();
-            } else {
-                action = RoleModel.find({}, cols);
-                actionCount = RoleModel.find({}, cols).count();
-            }
-            if (page && pageSize){
-                // 分页与排序
-                action = action.limit(Number(pageSize)).skip(Number(offset)).sort(sortObj);
-            } else {
-                action = action.sort(sortObj);
-            }
-            const totalCount = await actionCount;
-            const result = await action;
-            return({
-                status: 1,
-                type: 'SUCCESS',
-                response: {
-                    totalCount,
-                    result
-                }
-            })
-        } catch (err) {
-            console.log('getRole', err.message)
-            return({
-                status: 0,
-                type: 'ERROR_DB',
-                message: err.message
-            })
-        }
-    }
-
-    
-
-    /**
-     * 新增角色
-     * @param {*} name 
-     * @param {*} allows 
-     */
-    async addRole(name, allows){
+    async create(name, allows){
         try{
             if(!name){
                 throw new Error('name is required');
@@ -160,23 +86,25 @@ class Role extends BaseComponent{
                     })
                 }
             }
-        }catch(err){
+        }
+        catch(err){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
                 message: err.message
             })
         }
+
         try{
-            const role_id = await this.getId('role_id');
-            const newRole = {
-                id: role_id,
+            const id = await this.getId(this.model + '_id');
+            const newItem = {
+                id,
                 name
             }
-            await RoleModel.create(newRole);
+            await this.basemodel.create(newItem);
             if (allows) {
                 await allow([{
-                    roles: [role_id.toString()],
+                    roles: [id.toString()],
                     allows
                 }])
             }
@@ -184,11 +112,11 @@ class Role extends BaseComponent{
                 status: 1,
                 success: 'SUCCESS',
                 response: {
-                    id: role_id
+                    id: id
                 }
             })
         }catch(err){
-            console.log('addRole', err.message);
+            console.log('add', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -198,34 +126,33 @@ class Role extends BaseComponent{
     }
 
     /**
-     * 删除角色
-     * @param {*} role_id 
+     * 删除
+     * @param {*} id 
      */
-    async deleteRole(role_id) {
-        if(!role_id || !Number(role_id)){
+    async remove(id) {
+        if(!id || !Number(id)){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
-                message: 'invalid role_id',
-            })
+                message: 'invalid id',
+            }) 
         }
         try{
-            await RoleModel.findOneAndRemove({id: role_id});
-            const resourceList = await ResourceModel.find();
+            await this.basemodel.findOneAndRemove({id});
+            const resourceList = await this.basemodel.find();
             let resources = [];
             resourceList.forEach(function(item){
                 resources.push(item.id);
             });
-            await removeAllow(role_id, resources);
-            await removeRole(role_id);
+            await removeAllow(id, resources);
+            await removeRole(id);
             return({
                 status: 1,
                 success: 'SUCCESS'
             })
         }catch (err){
-            console.log('deleteRole', err);
+            console.log(this.model + ' delete', err.message);
             return({
-                status: 0,
                 type: 'ERROR_DB',
                 message: err.message
             })
@@ -235,20 +162,20 @@ class Role extends BaseComponent{
     
 
     /**
-     * 获取单个角色, 及对应资源信息
-     * @param {*} role_id 
+     * 获取单个
+     * @param {*} id 
      */
-    async getRoleById(role_id){
-        if(!role_id || !Number(role_id)){
+    async get(id){
+        if(!id || !Number(id)){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
-                message: 'invalid role_id'
+                message: 'invalid id'
             })
         }
         try{
-            let role = await RoleModel.findOne({id: role_id}, cols);
-            const allows_raw =  await whatResources(role_id);
+            const item = await this.basemodel.findOne({id: id}, this.cols);
+            const allows_raw =  await whatResources(id);
             // 转换格式,key值固定
             let allows = []
             for (let allow in allows_raw) {
@@ -258,7 +185,7 @@ class Role extends BaseComponent{
                     key: allow
                 })
             }
-            const {id, name} = role;
+            const {id, name} = item;
             const mix = {id, name, allows};
             return({
                 status: 1,
@@ -266,7 +193,7 @@ class Role extends BaseComponent{
                 response: mix
             });
         }catch(err){
-            console.log('getRoleById', err.message);
+            console.log(this.model + ' get', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -283,7 +210,7 @@ class Role extends BaseComponent{
      * @param {*} name 
      * @param {*} allows 
      */
-    async updateRole(role_id, name, allows){
+    async update(id, name, allows){
         try{
             if(!role_id || !Number(role_id)){
                 throw new Error('role_id is invalid')
@@ -315,16 +242,17 @@ class Role extends BaseComponent{
             if (name) {
                 newRole['name'] = name;
             }
-            await RoleModel.update({id: role_id}, newRole)
+            await this.basemodel.update({id: id}, newRole)
             if (allows) {
-                const old_resource_list = await ResourceModel.find();
+                const resource_response = await ResourceController.list();
+                const old_resource_list = await resource_response.response.result;
                 let old_resources = [];
                 old_resource_list.forEach(function(item){
                     old_resources.push(item.id);
                 })
-                await removeAllow(role_id, old_resources);
+                await removeAllow(id, old_resources);
                 await allow([{
-                    roles: [role_id],
+                    roles: [id],
                     allows
                 }])
             }
@@ -333,7 +261,7 @@ class Role extends BaseComponent{
                 success: 'SUCCESS'
             })
         }catch(err){
-            console.log('updateRole', err.message);
+            console.log(this.model + ' update', err.message);
             return({
                 status: 0,
                 type: 'ERROR_DB',
@@ -341,40 +269,5 @@ class Role extends BaseComponent{
             })
         }
     }
-
-    // 待定
-    async getRoleUsers(req, res, next){
-        const role_id = req.params.role_id;
-        function _f(role_id){
-            return new Promise(function(resolve,reject){
-                global.acl.roleUsers(role_id, function(err, resources){
-                    resolve(resources);
-                })
-            })
-        }
-        try{
-            if(!role_id || !Number(role_id)){
-                throw new Error('参数错误')
-            }
-        }catch(err){
-            console.log(err.message);
-            return({
-                status: 0,
-                type: 'GET_WRONG_PARAM',
-                message: err.message
-            })
-        }
-        try{
-            const _result = await _f(role_id);
-            return(_result);
-        }
-        catch(err){
-            console.log('获取角色用户失败', err);
-            return({
-                type: 'ERROR_GET_ROLE_USER',
-                message: '获取角色用户失败'
-            })
-        }
-    }
 }
-export default new Role()
+export default new Role(RoleOptions)

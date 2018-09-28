@@ -15,4 +15,11 @@ userSchema.index({id: 1});
 
 const User = mongoose.model('User', userSchema);
 
-export default User
+const Options = {
+    cols_config: [],
+    cols: 'id name account',
+    model: 'user',
+    basemodel: User,
+}
+
+export default Options

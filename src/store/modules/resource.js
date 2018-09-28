@@ -2,10 +2,11 @@ import * as api from '@/services/resource'
 import $doRequest from '@/utils/formatFetch'
 import template from '../template'
 
+const state = JSON.parse(JSON.stringify(template.state))
 const resource = {
     namespaced: true,
     state: {
-        ...template.state,
+        ...state,
         module: 'resource',
     },
     getters: {},

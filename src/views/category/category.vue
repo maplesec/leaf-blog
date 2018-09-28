@@ -101,6 +101,11 @@ export default {
             this.$store.dispatch(`${module}/getList`).then((e)=>{
                 //TODO: 出错的提示
                 this.$formatMessage(e, '获取用户列表', 'none');
+            }, (e) => {
+                this.$message({
+                    type: 'error',
+                    message: e.message
+                });
             })
         },
         handleSearch () {

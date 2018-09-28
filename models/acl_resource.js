@@ -13,4 +13,14 @@ resourceSchema.index({id: 1});
 
 const Resource = mongoose.model('Resource', resourceSchema);
 
-export default Resource
+const Options = {
+    cols_config: [
+        {key: 'id', index: 0, required: true},
+        {key: 'name', index: 1, required: true}
+    ],
+    cols: 'id name',
+    model: 'acl_resource',
+    basemodel: Resource,
+}
+
+export default Options

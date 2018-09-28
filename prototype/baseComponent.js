@@ -1,8 +1,14 @@
 import Ids from '../models/ids'
 
 export default class BaseComponent{
-    constructor(){
+    constructor(options={
+        cols_config: [{key: 'key', index: 0, required: false}],
+        cols: 'id key',
+        model: 'model',
+        basemodel: null,
+    }){
         this.idList = ['address_id','user_id','role_id','resource_id','draft_id','category_id'];
+        Object.assign(this, options);
     }
     async getId(type){
         if(!this.idList.includes(type)){
@@ -123,7 +129,7 @@ export default class BaseComponent{
                 status: 1,
                 success: 'SUCCESS',
                 response: {
-                    id: id
+                    id
                 }
             })
         }catch(err){
@@ -177,7 +183,7 @@ export default class BaseComponent{
             })
         }
         try{
-            const item = await this.basemodel.findOne({id: id}, this.cols);
+            const item = await this.basemodel.findOne({id}, this.cols);
             return({
                 status: 1,
                 type: 'SUCCESS',

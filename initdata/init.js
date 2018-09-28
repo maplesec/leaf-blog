@@ -4,11 +4,12 @@ import Resource from '../controller/acl_resource';
 import ResourceData from './resource';
 import RoleData from './role';
 import UserData from './user';
+import user from './user';
 
 async function init(){
     // 根据是否有用户判断是否需要初始化 
     // TODO： 更全面地判断如何初始化
-    const userlist = await User.getUsers();
+    const userlist = await User.list();
     if(userlist.response.totalCount===0){
         ResourceData.map(async function(item){
             await Resource.addResource(item.id, item.name);
