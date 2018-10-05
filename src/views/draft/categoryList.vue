@@ -20,7 +20,7 @@
         },
         data(){
             return {
-                categoryList: []
+                
             }
         },
         computed: {
@@ -31,6 +31,9 @@
                 set: function(newValue){
                     this.$emit('change', newValue);
                 }
+            },
+            categoryList(){
+                return this.$store.state.category.list.data;
             }
         },
         created(){
@@ -40,7 +43,6 @@
             getCategory () {
                 return this.$store.dispatch('category/getList').then((res) => {
                     this.$formatMessage(res, '获取角色列表', this.$showErrorType.none);
-                    // this.categoryList = res.result.result;
                 })
             },
         }

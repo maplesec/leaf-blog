@@ -23,11 +23,6 @@ export default {
         return this.$store.state.article.detail.content;
     }
   },
-  created () {
-    this.$store.dispatch('article/getArticle', this.$route.params.id).then((e) => {
-        this.$formatMessage(e, '获取文章详情');
-    });
-  },
   asyncData({store, route}){
     return store.dispatch('article/getArticle', route.params.id);
   },

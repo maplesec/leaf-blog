@@ -87,9 +87,6 @@ export default {
             }
         }
     },
-    created () {
-        this.initTable()
-    },
     asyncData({store}){
         return store.dispatch(`${module}/getList`)
     },

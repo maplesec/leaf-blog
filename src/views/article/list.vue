@@ -60,9 +60,6 @@
                 return this.$store.state[this.module].list.pagination;
             }
         },
-        created () {
-            this.initTable()
-        },
         asyncData({store}){
             return store.dispatch(`${module}/getList`)
         },

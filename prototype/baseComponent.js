@@ -104,10 +104,21 @@ export default class BaseComponent{
         let params = {};
         try{
             this.cols_config.forEach((item) => {
+                // 校验
                 if(item.required && !args[item.index]){
                     throw new Error(item.key + ' is required')
                 }
-                params[item.key] = args[item.index];
+                if(args[item.index] !== undefined){
+                    params[item.key] = args[item.index];
+                    if(item.type === 'int'){
+                        params[item.key] = parseInt(params[item.key]);
+                    }
+                }else{
+                    if(item.default !== undefined){
+                        // 默认值
+                        params[item.key] = item.default();
+                    }
+                }
             })
             console.log("params:", params)
         }
@@ -210,11 +221,23 @@ export default class BaseComponent{
             if(!id){
                 throw new Error('invalid id')
             }
-            this.cols_config.map((item) => {
+            // 如果没有声明 cols_config_edit 则使用 cols_config
+            const _config = this.cols_config_edit ? this.cols_config_edit : this.cols_config;
+            _config.map((item) => {
                 if(item.required && !args[item.index]){
                     throw new Error(item.key + ' is required')
                 }
-                params[item.key] = args[item.index];
+                if(args[item.index] !== undefined){
+                    params[item.key] = args[item.index];
+                    if(item.type === 'int'){
+                        params[item.key] = parseInt(params[item.key]);
+                    }
+                }else{
+                    if(item.default !== undefined){
+                        // 默认值
+                        params[item.key] = item.default();
+                    }
+                }
             })
         }catch(err){
             return({

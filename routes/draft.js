@@ -20,8 +20,8 @@ async function get(req, res, next){
 async function create(req, res, next){
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
-        const {title, imagesrc, content} = fields;
-        res.send(await Draft.create(title, imagesrc, content));
+        const {title, imagesrc, content, category} = fields;
+        res.send(await Draft.create(title, imagesrc, content, category));
     })
 }
 
@@ -29,8 +29,8 @@ async function update (req, res, next) {
     const draft_id = req.params.draft_id;
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
-        const {title, imagesrc, content} = fields;
-        res.send(await Draft.update(draft_id, title, imagesrc, content));
+        const {title, imagesrc, content, category} = fields;
+        res.send(await Draft.update(draft_id, title, imagesrc, content, category));
     })
 }
 

@@ -280,7 +280,7 @@ class User extends BaseComponent{
             const permissions = await allowedPermissions(id, resources);
             const roles = await userRoles(id);
             const user_obj = await this.basemodel.findOne({id: id}, cols);
-            const {id, name, account} = user_obj;
+            const {name, account} = user_obj;
             const mix = { id, name, account, permissions, roles };
             return({
                 status: 1,

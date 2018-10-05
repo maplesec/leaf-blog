@@ -11,21 +11,19 @@ class Draft extends BaseComponent {
 
     /**
      * 获取单个文章
-     * @param {*} draft_id 
+     * @param {*} id 
      * @param {*} html 为true时，返回html格式 
      */
-    async get(draft_id, html){
-        if(!draft_id || !Number(draft_id)){
+    async get(id, html){
+        if(!id || !Number(id)){
             return({
                 status: 0,
                 type: 'ERROR_PARAMS',
-                message: 'invalid draft_id'
+                message: 'invalid id'
             })
         }
         try{
-            const draft = await this.basemodel.findOne({id: draft_id});
-            const {id, title, imagesrc, content, createTime, lastEditTime, excerpt, publish} = draft;
-            let response = { id, title, imagesrc, content, createTime, lastEditTime, excerpt, publish };
+            let response = await this.basemodel.findOne({id}, this.cols);
             if(html && draft){
                 response = { ...response, content: marked(content) }
             }
