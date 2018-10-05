@@ -21,11 +21,11 @@ export default context => {
                 }
             )
             // 根据session判断用户是否已经登录
-            // const profile_api = axios.get('/acl_user/profile',{
-            //     headers: {
-            //         'Cookie': 'SID=' + context.cookies.SID
-            //     }
-            // });
+            const profile_api = axios.get('/acl_user/profile',{
+                headers: {
+                    'Cookie': 'SID=' + context.cookies.SID
+                }
+            });
             (profile_api).then(res => {
                 console.log(JSON.stringify(res.data))
                 if (res.data && res.data.status === 1) {
