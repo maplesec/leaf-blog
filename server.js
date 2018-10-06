@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import db from './mongodb/db.js';
 import router from './routes/index';
+import User from './controller/acl_user'
 
 var qr = require('qr-image');
 
@@ -44,7 +45,19 @@ app.get('/qr', function(req, res){
     code.pipe(res);
 })
 
-app.get('*', function(req, res){
+app.get('*', async function(req, res){
+    // 页面首次打开，或者刷新...
+    // 不满足管理员身份的，直接重定向
+    if(req.url.indexOf('/admin') === 0){
+        const user_id = req.session.user_id;
+        const auth = await User.getProfile(user_id)
+        if(auth && auth.status === 1){
+        
+        }else{
+            res.redirect('/login');
+            return;
+        }
+    }
     // const renderer = serverRender.createRenderer({
     //     template: require('fs').readFileSync('./src/index.template.html', 'utf-8')
     // })

@@ -1,57 +1,31 @@
 import { createApp } from './app'
 import axios from './services/axios'
 
+let sid = '';
+axios.interceptors.request.use(
+    config => {
+        config.headers['Cookie'] = 'SID=' + sid;
+        return config
+    },
+    err => {
+        
+    }
+)
+
 export default context => {
     return new Promise((resolve, reject) => {
         const { app, router, store } = createApp()
-
+        
         let _url = context.url;
-        console.log('session:', context.cookies)
         // 路由守卫
         if(context.url.indexOf('/admin') === 0){
-            // 管理员页面，需要认证
-            // 用session覆盖axios的配置
-            axios.interceptors.request.use(
-                config => {
-                    config.headers['Cookie'] = 'SID=' + context.cookies.SID
-                    return config
-                },
-                err => {
-                    return Promise.reject(err)
-                }
-            )
-            // 根据session判断用户是否已经登录
-            const profile_api = axios.get('/acl_user/profile',{
-                headers: {
-                    'Cookie': 'SID=' + context.cookies.SID
-                }
-            });
-            (profile_api).then(res => {
-                console.log(JSON.stringify(res.data))
-                if (res.data && res.data.status === 1) {
-                    store.dispatch('app/setProfile', res.data.response);
-                    store.dispatch('app/checkLogin')
-                    // 已登录
-                    router.push(_url)
-                } else {
-                    // 跳转到登录页面
-                    console.log('login error1')
-                    router.push('/login');
-                }
-            }, err => {
-                // 跳转到登录页面
-                console.log('login error2')
-                router.push('/login');
-            })
-
-
+            // 管理员身份刷新，继承cookie，免登陆
+            sid = context.cookies.SID;
         }else{
-            // 设置服务器端 router 的位置
-            router.push(_url)
+            sid = '';
         }
+        router.push(_url)
 
-    
-        
 
         // 等到 router 将可能的异步组件和钩子函数解析完
         router.onReady(() => {

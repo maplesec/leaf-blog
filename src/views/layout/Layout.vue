@@ -5,8 +5,18 @@
       <el-header height="50px">
         <hamburger class="hamburger-container" :toggleClick="toggleSideBar" :isActive="sidebar.opened"></hamburger>
         <div class="right-menu">
-          <span>{{profile.name}}</span>
-          <el-button size="mini" type="primary" @click="logout()">{{$t('common.logout')}}</el-button>
+          <!-- <span>{{profile.name}}</span>
+          <el-button size="mini" type="primary" @click="logout()">{{$t('common.logout')}}</el-button> -->
+
+          <el-dropdown trigger="click" @command="handleCommand">
+            <span class="el-dropdown-link">
+              {{profile.name}}<i class="el-icon-arrow-down el-icon--right"></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="logout">{{$t('common.logout')}}</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
         </div>
       </el-header>
       <el-main>
@@ -50,12 +60,21 @@
         this.$doRequest(api.logout(), '登出').then((res) => {
           this.$router.push({name: 'login'});
         })
+      },
+      handleCommand (command) {
+        switch(command){
+          case 'logout':
+            this.logout();
+            break;
+          default:
+            break;
+        }
       }
     }
   }
 </script>
 
-<style>
+<style lang="scss">
   .hamburger-container {
     line-height: 58px;
     height: 50px;
@@ -66,6 +85,7 @@
   .right-menu {
     float: right;
     height: 100%;
+    padding: 12px 15px;
   }
 
   .el-header {
@@ -79,7 +99,7 @@
 
   .sidebar-container{
     height: 100%;
-    position: fixed;
+    position: fixed !important;
     top: 0;
     bottom: 0;
     left: 0;
@@ -94,5 +114,14 @@
 
   .right-main-close{
     margin-left: 65px !important;
+  }
+
+  .el-dropdown-link {
+    cursor: pointer;
+    color: #409EFF;
+  }
+
+  .el-icon-arrow-down {
+    font-size: 12px;
   }
 </style>
