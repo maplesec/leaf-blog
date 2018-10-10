@@ -2,9 +2,9 @@
     <div class="main-content">
         <div class="post-lists">
             <div class="post-lists-body">
-                <div class="post-list-item" v-for="(item) in tableData" :key="item.id">
+                <div class="post-list-item" v-for="(item, index) in tableData" :key="item.id">
                     <div class="post-list-item-container">
-                        <div class="item-thumb bg-deepgrey" style="background-image:url('/static/img/2.jpg');"></div>
+                        <div class="item-thumb bg-deepgrey" :style="{backgroundImage: 'url(/static/img/' + (index + 1) + '.jpg)'}"></div>
                         <a style="cursor: pointer;" v-on:click="goDetailPage(item.id)">
                             <div class="item-desc">
                                 <p>{{ item.content }}</p>
