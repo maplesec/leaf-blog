@@ -10,7 +10,7 @@ export function createRouter(){
         mode: 'history',
         routes: [
             {
-                path: '/admin/login',
+                path: '/login',
                 name: 'login',
                 component: resolve => require(['@/views/login/index'], resolve)
             },
