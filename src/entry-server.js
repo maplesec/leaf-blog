@@ -12,6 +12,14 @@ axios.interceptors.request.use(
     }
 )
 
+// const { JSDOM }  = require("jsdom");
+// const dom = new JSDOM('<!doctype html><html><body></body></html>',
+// { url: 'http://localhost' })
+
+// global.window = dom.window;
+// global.document = window.document;
+// global.navigator = window.navigator;
+
 export default context => {
     return new Promise((resolve, reject) => {
         const { app, router, store } = createApp()

@@ -1,14 +1,15 @@
 
-import * as Headroom from '../../node_modules/headroom.js/dist/headroom';
+// import * as Headroom from '../../node_modules/headroom.js/dist/headroom';
 
 export default {
-    bind(el) {
-        // construct an instance of Headroom, passing the element
-        console.log("##", Headroom, el)
+    inserted(el) {
+        const Headroom = require('headroom.js')
         var options = {
             offset: 50
         }
-        var headroom  = new Headroom.default(el, options);
+        // construct an instance of Headroom, passing the element
+        var headroom  = new Headroom(el, options);
+        // var headroom  = new Headroom.default(el, options);
         // initialise
         headroom.init();
     }
