@@ -19,7 +19,7 @@
                                 <div class="item-meta-ico bg-ico-link"
                                      style="background: url('/static/img/bg-ico.png') no-repeat;background-size: 40px auto;"></div>
                                 <div class="item-meta-cat">
-                                    <a>this is category</a>
+                                    <a>默认分类</a>
                                 </div>
                             </div>
                         </div>

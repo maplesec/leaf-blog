@@ -1,5 +1,5 @@
 <template>
-    <header id="header" class="header bg-white">
+    <header v-head id="header" class="header bg-white headroom--pinned">
         <div class="navbar-container">
             <a class="navbar-logo" href="/">
                 <img src="/static/logo/leaf.png"  alt="Leaf Blog"/>
@@ -15,8 +15,12 @@
 </template>
 
 <script>
+    import head from '../../directives/head';
     const module = 'article';
     export default {
+        directives: {
+            head
+        },
         data () {
             return {
                 searchValue: '',
@@ -45,8 +49,8 @@
 <style>
     /*header*/
     .header {
-        line-height: 68px;
         position: fixed;
+        line-height: 68px;
         z-index: 10;
         top: 0;
         display: block;
@@ -95,4 +99,33 @@
         position: relative;
         top: -7px;
     }
+
+    @keyframes slideDown {
+        0% {
+            transform: translateY(-70px);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideUp {
+        0% {
+            transform: translateY(0);
+        }
+        100% {
+            transform: translateY(-70px);
+        }
+    }
+
+    .headroom--unpinned {
+        transform: translateY(-70px);
+        animation: slideUp 0.5s
+    }
+
+    .headroom--pinned {
+        animation: slideDown 0.5s
+    }
+
+
 </style>

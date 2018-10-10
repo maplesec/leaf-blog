@@ -24,8 +24,8 @@ class Draft extends BaseComponent {
         }
         try{
             let response = await this.basemodel.findOne({id}, this.cols);
-            if(html && draft){
-                response = { ...response, content: marked(content) }
+            if(html && response){
+                response = { ...response, content: marked(response.content) }
             }
             return({
                 status: 1,
